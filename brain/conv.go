@@ -77,14 +77,14 @@ func (c Conv) Foward(input [][][]float32) (output [][][]float32) {
 	regions := c.GetFullRegions(input)
 	h, w := len(input[0]), len(input[0][0])
 	for i := 0; i < len(c.Kernels); i++ {
-		output[i] = make([][]float32, h-(c.Dimension-1))
+		output[i] = make([][]float32, h)
 
 		for dim := 0; dim < len(input); dim++ {
 
-			for y := 0; y < h-(c.Dimension-1); y++ {
+			for y := 0; y < h; y++ {
 
-				output[i][y] = make([]float32, w-(c.Dimension-1))
-				for x := 0; x < w-(c.Dimension-1); x++ {
+				output[i][y] = make([]float32, w)
+				for x := 0; x < w; x++ {
 
 					var sum float32
 
@@ -104,10 +104,21 @@ func (c Conv) Foward(input [][][]float32) (output [][][]float32) {
 
 					}
 
-					output[i][y][x] += MathFuncs[c.ActivationFunc].Activate(sum / (float32(c.Dimension * c.Dimension)))
+					output[i][y][x] += (sum / (float32(c.Dimension * c.Dimension)))
 				}
 			}
+
 		}
+	}
+	for i := 0; i < len(output); i++ {
+		for y := 0; y < h; y++ {
+
+			for x := 0; x < w; x++ {
+
+				output[i][y][x] += MathFuncs[c.ActivationFunc].Activate(output[i][y][x])
+			}
+		}
+
 	}
 	return
 }

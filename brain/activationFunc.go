@@ -48,7 +48,7 @@ var (
 		},
 		"tanh": {
 			Derivate: devTanh,
-			Activate: devTanh,
+			Activate: tanh,
 		},
 	}
 )
