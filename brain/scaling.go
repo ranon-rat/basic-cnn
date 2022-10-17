@@ -55,11 +55,13 @@ func Pooling(input [][][]float32, scale int) [][][]float32 {
 func Depooling(output [][][]float32, oriH, oriW, scale int) [][][]float32 {
 
 	input := make([][][]float32, len(output))
-	for dim := 0; dim < oriH; dim++ {
+	for dim := 0; dim < len(output); dim++ {
 		input[dim] = make([][]float32, oriH)
-		for y := 0; y < oriW; y++ {
+		for y := 0; y < oriH; y++ {
+
 			input[dim][y] = make([]float32, oriW)
-			for x := 0; x < len(input[dim][y]); x++ {
+			for x := 0; x < oriW; x++ {
+
 				input[dim][y][x] = output[dim][y/scale][x/scale]
 			}
 		}

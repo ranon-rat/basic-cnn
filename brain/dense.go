@@ -1,11 +1,12 @@
 package brain
 
-import "math/rand"
+import (
+	"math/rand"
+)
 
 type SoftMax struct {
-	Bias           []float32
-	Weights        [][]float32
-	ActivationFunc string
+	Bias    []float32   `json:"bias"`
+	Weights [][]float32 `json:"weights"`
 }
 
 func NewSoftMaxLayer(input, output int) (layer SoftMax) {
@@ -25,7 +26,6 @@ func NewSoftMaxLayer(input, output int) (layer SoftMax) {
 
 func (net SoftMax) Foward(Input []float32) (output []float32) {
 	output = make([]float32, len(net.Bias))
-	copy(output, net.Bias)
 	for n := 0; n < len(net.Weights); n++ {
 
 		for c := 0; c < len(net.Weights[n]); c++ {
@@ -33,25 +33,20 @@ func (net SoftMax) Foward(Input []float32) (output []float32) {
 		}
 	}
 	for n := 0; n < len(output); n++ {
-		output[n] = MathFuncs[net.ActivationFunc].Activate(output[n])
+		output[n] = softMax(output, output[n]+net.Bias[n])
 	}
 	return output
 }
 
-func (net SoftMax) Backprop(output []float32, expected []float32) ([][]float32, []float32, []float32) {
-	bd := make([]float32, len(net.Bias))
-	wd := make([][]float32, len(net.Weights))
-
-	errors := make([]float32, len(expected))
+func (net SoftMax) Backprop(errors []float32, input []float32, output []float32) (wd [][]float32, bd []float32, err []float32) {
+	bd = make([]float32, len(net.Bias))
+	wd = make([][]float32, len(net.Weights))
 
 	// I dont need to explain this one
-	for i, n := range output {
-		errors[i] = n - expected[i]
-	}
 
 	for i := range net.Bias {
 		//gradient=errors*dy/dx(fx)(layer[l+1])
-		bd[i] += errors[i] * MathFuncs[net.ActivationFunc].Derivate(output[i])
+		bd[i] += errors[i] * devSoftMax(output, i)
 	}
 	//layer_t *gradient
 	for n := 0; n < len(wd); n++ {
@@ -59,27 +54,25 @@ func (net SoftMax) Backprop(output []float32, expected []float32) ([][]float32, 
 
 		for i := range net.Weights[n] {
 
-			wd[n][i] += output[n] * (bd[i])
+			wd[n][i] += input[n] * (bd[i])
 		}
 	}
 
-	errorcp := make([]float32, len(net.Weights))
+	err = make([]float32, len(net.Weights))
 	// errors=weights_t*errors
-	for i := range net.Weights {
+	for i := range input {
 
-		var err float32 = 0.0
+		var e float32 = 0.0
 		for j := range errors {
-			err += net.Weights[i][j] * errors[j]
+			e += net.Weights[i][j] * errors[j]
 		}
-		errorcp[i] = err
+		err[i] = e
 	}
-	errors = errorcp
-
-	return wd, bd, errors
+	return wd, bd, err
 
 }
 
-func (net *SoftMax) UpdateWeights(wd [][]float32, bd []float32, lr float32) {
+func (net *SoftMax) Update(wd [][]float32, bd []float32, lr float32) {
 	for n := 0; n < len(net.Weights); n++ {
 		for c := 0; c < len(net.Bias); c++ {
 			net.Weights[n][c] -= wd[n][c] * lr

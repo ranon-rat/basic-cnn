@@ -1,29 +1,14 @@
 package main
 
 import (
-	"encoding/json"
-	"os"
-
 	"github.com/ranon-rat/basic-cnn/brain"
+	"github.com/ranon-rat/basic-cnn/data"
 )
 
 func main() {
-	example := [][][]float32{
-		{
-			{255, 0, 0, 0},
-			{0, 255, 0, 0},
-			{0, 0, 255, 0},
-			{0, 0, 0, 255},
-		},
-		{
-			{255, 0, 0, 0},
-			{0, 255, 0, 255},
-			{0, 0, 255, 0},
-			{0, 255, 0, 255},
-		},
-	}
-	//c := brain.NewConv(3, 3, "relu")
-	f, _ := os.OpenFile("a.json", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644) //
-	json.NewEncoder(f).Encode(brain.Pooling(example, 2))
+	dat := data.OpenImages("shapes")
+	net := brain.NewNetwork(200, 200, 7, 4, 5, []int{2, 2, 2, 2, 2}, []int{2})
 
+	net.Train(dat, 2.5, 100)
+	net.Save("model.json")
 }

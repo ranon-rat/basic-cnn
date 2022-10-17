@@ -124,16 +124,19 @@ func (c Conv) Foward(input [][][]float32) (output [][][]float32) {
 }
 
 // I will take my time for thinking how i can make this
-func (c Conv) BackProp(err [][][]float32, learningRate float32, output, input [][][]float32) ([][][]float32, [][][]float32) {
+// err gradient kernels
+func (c Conv) BackProp(err [][][]float32, output, input [][][]float32) ([][][]float32, [][][]float32) {
 
 	// okay errors is the next layer
 	// the gradient is for
 	gradient := [][][]float32{}
 
 	for d := 0; d < len(err); d++ {
+
 		gradient = append(gradient, [][]float32{})
 		for y := 0; y < len(err[0]); y++ {
 			gradient[d] = append(gradient[d], []float32{})
+
 			for x := 0; x < len(err[d][y]); x++ {
 				// this should be enought for getting the gradient
 				// i dont really know if its going to work but i hope it does
@@ -147,14 +150,18 @@ func (c Conv) BackProp(err [][][]float32, learningRate float32, output, input []
 	for i := 0; i < len(c.Kernels); i++ {
 
 		for dim := 0; dim < len(input); dim++ {
-			gradKernels[i] = make([][]float32, len(regions[dim]))
 
 			for y := 0; y < len(regions[dim]); y++ {
-				gradKernels[i][y] = make([]float32, len(regions[dim][y]))
 
 				for x := 0; x < len(regions[dim][y]); x++ {
-
+					if len(gradKernels[i]) == 0 {
+						gradKernels[i] = make([][]float32, c.Dimension)
+					}
 					for r := 0; r < c.Dimension; r++ {
+						if len(gradKernels[i][r]) == 0 {
+							gradKernels[i][r] = make([]float32, c.Dimension)
+						}
+
 						for q := 0; q < c.Dimension; q++ {
 							gradKernels[i][r][q] += gradient[dim][y][x] * regions[dim][y][x][r][q]
 						}
@@ -172,10 +179,10 @@ func (c Conv) BackProp(err [][][]float32, learningRate float32, output, input []
 
 		for dim := 0; dim < len(input); dim++ {
 
-			for y := 0; y < h-(c.Dimension-1); y++ {
+			for y := 0; y < h; y++ {
 
-				errcp[i][y] = make([]float32, w-(c.Dimension-1))
-				for x := 0; x < w-(c.Dimension-1); x++ {
+				errcp[i][y] = make([]float32, w)
+				for x := 0; x < w; x++ {
 
 					var sum float32
 
@@ -197,7 +204,7 @@ func (c Conv) BackProp(err [][][]float32, learningRate float32, output, input []
 	return err, gradKernels
 
 }
-func (c *Conv) UpdateKernel(learningRate float32, kernelGradient [][][]float32) {
+func (c *Conv) UpdateKernel(kernelGradient [][][]float32, learningRate float32) {
 	for d := range c.Kernels {
 		for y := 0; y < c.Dimension; y++ {
 			for x := 0; x < c.Dimension; x++ {
